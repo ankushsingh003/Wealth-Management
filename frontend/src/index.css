@@ -2,8 +2,30 @@
 @tailwind components;
 @tailwind utilities;
 
-body {
-  @apply bg-[#0f172a] text-slate-200;
-  margin: 0;
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+@layer base {
+  body {
+    @apply bg-background text-slate-200 antialiased;
+    margin: 0;
+  }
+}
+
+/* Custom Component Styles */
+.report-content h1 {
+  @apply text-4xl font-display font-extrabold tracking-tight text-white mb-8;
+}
+
+.report-content h2 {
+  @apply text-xl font-display font-bold text-primary-light tracking-wider uppercase mt-12 mb-4;
+}
+
+.report-content p {
+  @apply text-slate-300 leading-relaxed mb-6;
+}
+
+.report-content blockquote {
+  @apply border-l-4 border-primary bg-primary/5 p-6 rounded-2xl italic text-slate-200 mb-8;
+}
+
+.report-content ul {
+  @apply list-disc list-inside space-y-2 mb-6 text-slate-300;
 }
