@@ -1,9 +1,9 @@
-@import "tailwindcss";
-
-@theme {
-  --font-sans: "Inter", system-ui, -apple-system, sans-serif;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 body {
-  @apply bg-[#0f172a];
+  @apply bg-[#0f172a] text-slate-200;
+  margin: 0;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
 }

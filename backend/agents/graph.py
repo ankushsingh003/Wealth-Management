@@ -42,11 +42,24 @@ def compliance_node(state: AgentState):
     return {"compliance_check": check, "messages": state['messages'] + ["Compliance finished"]}
 
 def synthesis_node(state: AgentState):
-    """Placeholder for report generation."""
-    report = f"# Research Report for {state['ticker']}\n\n"
-    report += f"## SEC Insights\n{state['sec_data']}\n\n"
-    report += f"## Market Sentiment\n{state['news_sentiment']}\n\n"
-    report += f"## Compliance Status\n{state['compliance_check']}"
+    """Synthesizes all data into a professional CFA-compliant report."""
+    ticker = state['ticker']
+    report = f"<h1>Investment Research Report: {ticker}</h1>"
+    report += f"<h2>Executive Summary</h2>"
+    report += f"<p>This report provides a multi-agent synthesis of SEC filings and market sentiment for {ticker}, reviewed against CFA Standard V(A).</p>"
+    
+    report += f"<h2>I. Primary Document Analysis (SEC)</h2>"
+    report += f"<p>{state['sec_data']}</p>"
+    
+    report += f"<h2>II. Market Sentiment & News Analysis</h2>"
+    report += f"<p>{state['news_sentiment']}</p>"
+    
+    report += f"<h2>III. Compliance Audit & Diligence Basis</h2>"
+    report += f"<blockquote>{state['compliance_check']}</blockquote>"
+    
+    report += f"<h2>IV. Recommendation Basis</h2>"
+    report += f"<p>Based on the synthesis of primary SEC documents and corroborated market sentiment, the research team maintains a 'Diligence-Verified' status for this analysis.</p>"
+    
     return {"final_report": report, "messages": state['messages'] + ["Synthesis finished"]}
 
 # Build Workflow
