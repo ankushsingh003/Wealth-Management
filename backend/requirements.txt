@@ -9,4 +9,5 @@ pandas
 beautifulsoup4
 requests
 python-dotenv
+textblob
 pytest
