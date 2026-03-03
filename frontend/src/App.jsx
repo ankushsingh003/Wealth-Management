@@ -1,39 +1,56 @@
 import React, { useState, useEffect, useRef } from 'react';
 import {
   Search, Loader2, BookOpen, BarChart3, ShieldCheck,
-  FileText, ChevronRight, Share2, Download,
-  LayoutDashboard, PieChart, Activity, Settings,
-  TrendingUp, Globe, Zap, CheckCircle2, Clock
+  FileText, Download, Share2, LayoutDashboard, PieChart,
+  Activity, Settings, TrendingUp, Globe, Zap, CheckCircle2,
+  ChevronRight,
 } from 'lucide-react';
 
-// ─── Sidebar Item ─────────────────────────────────────────────────────────────
-const NavItem = ({ icon: Icon, label, active = false, soon = false }) => (
-  <button
-    disabled
-    className={[
-      'flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all duration-200 text-left cursor-not-allowed',
-      active
-        ? 'bg-indigo-600 text-white shadow-lg'
-        : 'text-slate-500 hover:text-slate-300 hover:bg-white/5',
-    ].join(' ')}
-  >
-    <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-white' : 'text-slate-500'}`} />
-    <span className="text-sm font-semibold">{label}</span>
-    {soon && (
-      <span className="ml-auto text-[9px] font-bold tracking-widest uppercase bg-slate-800 text-slate-600 border border-slate-700 px-1.5 py-0.5 rounded">
-        Soon
-      </span>
-    )}
-  </button>
-);
+// ─── Color palette ────────────────────────────────────────────────────────────
+const C = {
+  bg: '#020617',
+  surface: '#0f172a',
+  surfaceAlt: '#0d1526',
+  border: 'rgba(255,255,255,0.06)',
+  borderLight: 'rgba(255,255,255,0.04)',
+  primary: '#6366f1',
+  primaryDark: '#4338ca',
+  emerald: '#10b981',
+  text: '#e2e8f0',
+  textMuted: '#64748b',
+  textFaint: '#1e293b',
+};
 
-// ─── Status Pill ──────────────────────────────────────────────────────────────
-const StatusPill = ({ ok = true }) => (
-  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest ${ok ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
-    <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
-    {ok ? 'Systems Nominal' : 'Degraded'}
-  </div>
-);
+// ─── Reusable helpers ─────────────────────────────────────────────────────────
+const glass = (extra = {}) => ({
+  background: 'rgba(15,23,42,0.65)',
+  backdropFilter: 'blur(24px)',
+  WebkitBackdropFilter: 'blur(24px)',
+  border: `1px solid ${C.border}`,
+  ...extra,
+});
+
+// ─── Sidebar NavItem ──────────────────────────────────────────────────────────
+function NavItem({ icon: Icon, label, active = false, soon = false }) {
+  return (
+    <div style={{
+      display: 'flex', alignItems: 'center', gap: 12,
+      padding: '11px 16px', borderRadius: 14, cursor: 'default',
+      background: active ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : 'transparent',
+      color: active ? '#fff' : C.textMuted,
+      boxShadow: active ? `0 8px 24px rgba(99,102,241,0.25)` : 'none',
+      transition: 'all 0.2s',
+    }}>
+      <Icon size={16} />
+      <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{label}</span>
+      {soon && (
+        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: C.textMuted }}>
+          Soon
+        </span>
+      )}
+    </div>
+  );
+}
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
@@ -50,12 +67,10 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (consoleRef.current) {
-      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
-    }
+    if (consoleRef.current) consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
   }, [logs]);
 
-  const addLog = (msg) => setLogs(prev => [...prev, { msg, time: new Date().toLocaleTimeString() }]);
+  const addLog = (msg) => setLogs(prev => [...prev, { msg, ts: new Date().toLocaleTimeString() }]);
 
   const handleResearch = async () => {
     if (!ticker) return;
@@ -64,14 +79,13 @@ export default function App() {
     setLogs([]);
 
     const steps = [
-      'Initializing agent orchestration nodes...',
-      `Connecting to SEC EDGAR for ${ticker}...`,
-      'Fetching 10-K / 10-Q primary documents...',
-      'Spawning News Sentiment Analyzer...',
-      'Running CFA Standard V(A) compliance check...',
-      'Synthesizing consolidated research report...',
+      'Initializing LangGraph orchestration nodes…',
+      `Connecting to SEC EDGAR for ${ticker}…`,
+      'Fetching 10-K / 10-Q primary documents…',
+      'Spawning News Sentiment Analysis agent…',
+      'Running CFA Standard V(A) compliance audit…',
+      'Synthesizing consolidated research report…',
     ];
-
     for (const step of steps) {
       addLog(step);
       await new Promise(r => setTimeout(r, 600));
@@ -87,38 +101,66 @@ export default function App() {
       setReport(data.final_report);
       addLog('✓ Report generated. CFA audit complete.');
     } catch {
-      addLog('✗ Connection error. Ensure the backend server is running on port 8000.');
+      addLog('✗ Backend connection error. Ensure port 8000 is active.');
     } finally {
       setLoading(false);
     }
   };
 
+  // ─── Render ─────────────────────────────────────────────────────────────────
   return (
-    <div className="flex h-screen overflow-hidden" style={{ background: '#020617', color: '#e2e8f0', fontFamily: "'Inter', system-ui, sans-serif" }}>
+    <div style={{ display: 'flex', height: '100vh', width: '100vw', overflow: 'hidden', background: C.bg, color: C.text, fontFamily: "'Inter', system-ui, sans-serif", position: 'relative' }}>
 
-      {/* ── Background Orbs ── */}
-      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
-        <div style={{ position: 'absolute', top: '-15%', left: '-10%', width: 600, height: 600, background: 'radial-gradient(circle, rgba(79,70,229,0.18) 0%, transparent 70%)', borderRadius: '50%' }} />
-        <div style={{ position: 'absolute', bottom: '-10%', right: '5%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(16,185,129,0.10) 0%, transparent 70%)', borderRadius: '50%' }} />
+      {/* ── Injected keyframes ── */}
+      <style>{`
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@600;700;800&display=swap');
+        * { box-sizing: border-box; }
+        ::-webkit-scrollbar { width: 3px; }
+        ::-webkit-scrollbar-track { background: transparent; }
+        ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.08); border-radius: 99px; }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        @keyframes spin { to { transform: rotate(360deg); } }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.4} }
+        @keyframes slideUp { from{opacity:0;transform:translateY(18px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fadeIn { from{opacity:0} to{opacity:1} }
+        .animate-float { animation: float 5s ease-in-out infinite; }
+        .animate-spin { animation: spin 1s linear infinite; }
+        .animate-pulse { animation: pulse 1.8s ease-in-out infinite; }
+        .animate-slide-up { animation: slideUp 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .animate-fade-in { animation: fadeIn 0.3s ease forwards; }
+        .report h1 { font-family:'Outfit',sans-serif; font-size:2rem; font-weight:800; color:#fff; margin-bottom:1.5rem; letter-spacing:-0.02em; }
+        .report h2 { font-family:'Outfit',sans-serif; font-size:0.8rem; font-weight:700; color:#818cf8; text-transform:uppercase; letter-spacing:0.12em; margin:2.5rem 0 0.75rem; }
+        .report p { color:#94a3b8; line-height:1.85; margin-bottom:1rem; }
+        .report blockquote { padding:1rem 1.5rem; border-left:3px solid #6366f1; background:rgba(99,102,241,0.07); border-radius:12px; color:#c7d2fe; font-style:italic; margin:1.5rem 0; }
+        .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.025) 1px, transparent 0); background-size:32px 32px; }
+        .chip-btn:hover { background:rgba(255,255,255,0.07) !important; color:#e2e8f0 !important; }
+        .icon-btn:hover { background:rgba(255,255,255,0.06) !important; color:#e2e8f0 !important; }
+        .nav-hover:hover { background:rgba(255,255,255,0.04) !important; color:#e2e8f0 !important; }
+        input::placeholder { color: #1e3a5f; }
+        input:focus { outline: none; border-color: rgba(99,102,241,0.5) !important; box-shadow: 0 0 0 3px rgba(99,102,241,0.12); }
+      `}</style>
+
+      {/* ── Background orbs ── */}
+      <div style={{ position: 'absolute', inset: 0, pointerEvents: 'none', overflow: 'hidden', zIndex: 0 }}>
+        <div style={{ position: 'absolute', top: '-15%', left: '-10%', width: 600, height: 600, background: 'radial-gradient(circle, rgba(79,70,229,0.20) 0%, transparent 65%)', borderRadius: '50%' }} />
+        <div style={{ position: 'absolute', bottom: '-10%', right: '0%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(16,185,129,0.10) 0%, transparent 65%)', borderRadius: '50%' }} />
       </div>
 
-      {/* ── Sidebar ── */}
-      <aside className="w-72 flex-shrink-0 flex flex-col z-10 relative" style={{ background: 'rgba(15,23,42,0.7)', borderRight: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(24px)' }}>
+      {/* ══════════════════════════════ SIDEBAR ══════════════════════════════ */}
+      <aside style={{ width: 272, flexShrink: 0, display: 'flex', flexDirection: 'column', zIndex: 10, ...glass(), borderRight: `1px solid ${C.border}`, padding: '28px 16px' }}>
         {/* Logo */}
-        <div className="px-7 pt-8 pb-6 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6366f1, #4338ca)', boxShadow: '0 8px 32px rgba(99,102,241,0.35)' }}>
-            <ShieldCheck className="w-5 h-5 text-white" />
+        <div style={{ display: 'flex', alignItems: 'center', gap: 12, padding: '0 8px', marginBottom: 36 }}>
+          <div style={{ width: 42, height: 42, borderRadius: 13, background: `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})`, boxShadow: `0 8px 32px rgba(99,102,241,0.35)`, display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}>
+            <ShieldCheck size={20} color="#fff" />
           </div>
           <div>
-            <p className="text-white font-bold text-lg leading-none" style={{ fontFamily: "'Outfit', sans-serif" }}>
-              NEURO<span style={{ color: '#6366f1' }}>PRESS</span>
-            </p>
-            <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold mt-0.5">Wealth · Research</p>
+            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 18, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1 }}>NEURO<span style={{ color: C.primary }}>PRESS</span></div>
+            <div style={{ fontSize: 9, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: 4, fontWeight: 700 }}>Wealth · Research</div>
           </div>
         </div>
 
         {/* Nav */}
-        <nav className="flex-1 px-4 space-y-1.5">
+        <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
           <NavItem icon={LayoutDashboard} label="Research Terminal" active />
           <NavItem icon={Activity} label="Live Orchestration" soon />
           <NavItem icon={PieChart} label="Portfolio Diligence" soon />
@@ -126,170 +168,163 @@ export default function App() {
           <NavItem icon={ShieldCheck} label="Compliance Hub" soon />
         </nav>
 
-        {/* User Card */}
-        <div className="m-4 p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-          <div className="flex items-center gap-3 mb-3">
-            <img src="https://ui-avatars.com/api/?name=Research+Desk&background=4f46e5&color=fff&size=36&bold=true" className="w-9 h-9 rounded-lg" alt="Avatar" />
+        {/* User card */}
+        <div style={{ marginTop: 24, padding: 16, borderRadius: 16, background: 'rgba(255,255,255,0.03)', border: `1px solid ${C.border}` }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
+            <img src="https://ui-avatars.com/api/?name=RD&background=4f46e5&color=fff&bold=true&size=36" style={{ width: 38, height: 38, borderRadius: 10 }} alt="avatar" />
             <div>
-              <p className="text-xs font-bold text-white">Institutional Plan</p>
-              <p className="text-[10px] text-slate-500 uppercase tracking-widest">Research Desk</p>
+              <div style={{ fontSize: 12, fontWeight: 700, color: '#fff' }}>Institutional Plan</div>
+              <div style={{ fontSize: 10, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.12em', marginTop: 2 }}>Research Desk</div>
             </div>
           </div>
-          <button className="w-full py-2 text-xs font-semibold text-slate-400 rounded-lg flex items-center justify-center gap-2 transition-all hover:bg-white/5">
-            <Settings className="w-3.5 h-3.5" /> System Configuration
+          <button className="nav-hover" style={{ width: '100%', padding: '9px 0', borderRadius: 10, background: 'transparent', border: `1px solid ${C.border}`, color: C.textMuted, fontSize: 12, fontWeight: 600, cursor: 'default', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 6, transition: 'all 0.2s' }}>
+            <Settings size={13} /> System Config
           </button>
         </div>
       </aside>
 
-      {/* ── Main Content ── */}
-      <div className="flex-1 flex flex-col overflow-hidden relative z-10">
+      {/* ══════════════════════════ MAIN CONTENT ════════════════════════════ */}
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', position: 'relative', zIndex: 10 }}>
 
-        {/* ── Top Bar ── */}
-        <header className="h-18 flex items-center justify-between px-8 py-4 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(16px)' }}>
-          <div className="flex items-center gap-2 text-xs text-slate-500">
-            <LayoutDashboard className="w-4 h-4" />
+        {/* ── Top bar ── */}
+        <header style={{ height: 64, display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '0 32px', borderBottom: `1px solid ${C.border}`, background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(16px)', flexShrink: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 12, color: C.textMuted }}>
+            <LayoutDashboard size={14} />
             <span>Platform</span>
-            <ChevronRight className="w-3 h-3" />
-            <span className="text-white font-semibold">Research Terminal</span>
+            <ChevronRight size={12} style={{ opacity: 0.4 }} />
+            <span style={{ color: '#fff', fontWeight: 600 }}>Research Terminal</span>
           </div>
-          <div className="flex items-center gap-5">
-            <div className="text-right">
-              <p className="text-sm font-bold text-white tabular-nums">{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
-              <p className="text-[10px] text-slate-600 uppercase tracking-widest">Market Hours Closed</p>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+            <div style={{ textAlign: 'right' }}>
+              <div style={{ fontSize: 14, fontWeight: 700, color: '#fff', fontVariantNumeric: 'tabular-nums' }}>{time.toLocaleTimeString()}</div>
+              <div style={{ fontSize: 9, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.15em', marginTop: 2 }}>Market Hours Closed</div>
             </div>
-            <StatusPill ok />
+            <div style={{ display: 'flex', alignItems: 'center', gap: 7, padding: '6px 12px', borderRadius: 99, background: 'rgba(16,185,129,0.10)', border: '1px solid rgba(16,185,129,0.20)' }}>
+              <div className="animate-pulse" style={{ width: 7, height: 7, borderRadius: '50%', background: C.emerald }} />
+              <span style={{ fontSize: 9, fontWeight: 700, color: C.emerald, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Systems Nominal</span>
+            </div>
           </div>
         </header>
 
         {/* ── Body ── */}
-        <div className="flex-1 flex gap-6 p-6 overflow-hidden">
+        <div style={{ flex: 1, display: 'flex', gap: 20, padding: 20, overflow: 'hidden' }}>
 
-          {/* LEFT: Input + Console */}
-          <div className="w-80 flex-shrink-0 flex flex-col gap-4">
+          {/* ─── LEFT COLUMN ─── */}
+          <div style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
 
-            {/* Input Panel */}
-            <div className="rounded-2xl p-6 flex flex-col gap-5 relative overflow-hidden" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(24px)' }}>
-              <div className="absolute top-0 right-0 opacity-[0.04] pointer-events-none">
-                <Search style={{ width: 160, height: 160, transform: 'translate(30%, -30%) rotate(-10deg)' }} />
+            {/* Input panel */}
+            <div style={{ borderRadius: 24, padding: 28, position: 'relative', overflow: 'hidden', ...glass() }}>
+              <div style={{ position: 'absolute', top: 0, right: 0, opacity: 0.03, pointerEvents: 'none', transform: 'translate(20%, -20%)' }}>
+                <Search size={160} />
               </div>
-              <div>
-                <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Agentic Initiation</h2>
-                <p className="text-xs text-slate-500 leading-relaxed">Execute CFA-compliant due diligence on any global equity ticker.</p>
-              </div>
+              <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 22, fontWeight: 800, color: '#fff', marginBottom: 6, letterSpacing: '-0.02em' }}>Agentic Initiation</div>
+              <div style={{ fontSize: 12, color: C.textMuted, lineHeight: 1.7, marginBottom: 24 }}>Execute CFA-compliant due diligence on any global equity ticker.</div>
 
-              <div>
-                <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-[0.15em] mb-2">Asset Identifier</label>
-                <div className="relative">
-                  <Zap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#6366f1' }} />
+              {/* Input */}
+              <div style={{ marginBottom: 16 }}>
+                <div style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.18em', marginBottom: 8 }}>Asset Identifier</div>
+                <div style={{ position: 'relative' }}>
+                  <Zap size={15} color={C.primary} style={{ position: 'absolute', left: 14, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none' }} />
                   <input
                     type="text"
                     placeholder="TSLA, AAPL, MSFT…"
                     value={ticker}
                     onChange={e => setTicker(e.target.value.toUpperCase())}
                     onKeyDown={e => e.key === 'Enter' && handleResearch()}
-                    className="w-full rounded-xl py-3 pl-10 pr-4 text-white font-bold text-sm placeholder-slate-700 outline-none focus:ring-2"
-                    style={{ background: 'rgba(2,6,23,0.8)', border: '1px solid rgba(255,255,255,0.08)', letterSpacing: '0.08em', transition: 'all 0.2s' }}
+                    style={{ width: '100%', padding: '14px 14px 14px 40px', borderRadius: 14, background: 'rgba(2,6,23,0.8)', border: '1px solid rgba(99,102,241,0.2)', color: '#fff', fontWeight: 700, fontSize: 14, letterSpacing: '0.06em', transition: 'all 0.2s', fontFamily: 'inherit' }}
                   />
                 </div>
               </div>
 
+              {/* CTA Button */}
               <button
                 onClick={handleResearch}
                 disabled={loading || !ticker}
-                className="w-full py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
-                style={{ background: 'linear-gradient(135deg, #6366f1, #4338ca)', boxShadow: loading ? 'none' : '0 8px 32px rgba(99,102,241,0.35)' }}
+                style={{ width: '100%', padding: '16px 0', borderRadius: 14, background: loading || !ticker ? 'rgba(99,102,241,0.3)' : `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})`, border: 'none', color: '#fff', fontWeight: 700, fontSize: 14, cursor: loading || !ticker ? 'not-allowed' : 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, boxShadow: loading || !ticker ? 'none' : '0 8px 32px rgba(99,102,241,0.35)', transition: 'all 0.3s', fontFamily: 'inherit' }}
               >
-                {loading ? <><Loader2 className="w-4 h-4 animate-spin" /><span>Orchestrating Agents…</span></> : <><LayoutDashboard className="w-4 h-4" /><span>Start Research Pipeline</span></>}
+                {loading
+                  ? <><Loader2 size={16} className="animate-spin" /><span className="animate-pulse">Orchestrating Agents…</span></>
+                  : <><LayoutDashboard size={16} /><span>Start Research Pipeline</span></>
+                }
               </button>
 
-              {/* Stats Row */}
-              <div className="grid grid-cols-2 gap-3 pt-1">
-                {[
-                  { label: 'Data Sources', value: '4 Active' },
-                  { label: 'CFA Standard', value: 'V(A)' },
-                ].map(s => (
-                  <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                    <p className="text-xs font-bold text-white">{s.value}</p>
-                    <p className="text-[10px] text-slate-600 mt-0.5">{s.label}</p>
+              {/* Stats */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 10, marginTop: 16 }}>
+                {[['4 Active', 'Data Sources'], ['V(A)', 'CFA Standard']].map(([val, lbl]) => (
+                  <div key={lbl} style={{ borderRadius: 12, padding: 12, textAlign: 'center', background: 'rgba(255,255,255,0.02)', border: `1px solid ${C.borderLight}` }}>
+                    <div style={{ fontSize: 14, fontWeight: 800, color: '#fff', fontFamily: "'Outfit',sans-serif" }}>{val}</div>
+                    <div style={{ fontSize: 9, color: C.textMuted, marginTop: 3, textTransform: 'uppercase', letterSpacing: '0.12em', fontWeight: 700 }}>{lbl}</div>
                   </div>
                 ))}
               </div>
             </div>
 
-            {/* Agent Console */}
-            <div className="flex-1 rounded-2xl flex flex-col overflow-hidden" style={{ background: 'rgba(2,6,23,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="px-5 py-4 flex items-center justify-between flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-                <div className="flex items-center gap-2">
-                  <Activity className="w-4 h-4" style={{ color: '#6366f1' }} />
-                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Agent Console</span>
+            {/* Agent console */}
+            <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRadius: 20, overflow: 'hidden', background: 'rgba(2,6,23,0.85)', border: `1px solid ${C.border}` }}>
+              <div style={{ padding: '16px 20px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <Activity size={14} color={C.primary} />
+                  <span style={{ fontSize: 10, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.15em' }}>Agent Console</span>
                 </div>
-                {loading && <span className="text-[10px] font-bold uppercase tracking-widest animate-pulse" style={{ color: '#6366f1' }}>● Live</span>}
+                {loading && <span className="animate-pulse" style={{ fontSize: 9, fontWeight: 700, color: C.primary, textTransform: 'uppercase', letterSpacing: '0.15em' }}>● Live</span>}
               </div>
-
-              <div ref={consoleRef} className="flex-1 overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.07) transparent' }}>
+              <div ref={consoleRef} style={{ flex: 1, overflowY: 'auto', padding: 16, display: 'flex', flexDirection: 'column', gap: 10 }}>
                 {logs.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center opacity-30 select-none gap-3">
-                    <FileText className="w-10 h-10 text-slate-700" />
-                    <p className="text-xs text-slate-500">Awaiting mission parameters…</p>
+                  <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', opacity: 0.25 }}>
+                    <FileText size={36} color={C.textMuted} />
+                    <p style={{ fontSize: 12, color: C.textMuted, marginTop: 10 }}>Awaiting mission parameters…</p>
                   </div>
                 ) : logs.map((l, i) => (
-                  <div key={i} className="flex gap-3 text-xs animate-fade-in">
-                    <span className="text-slate-700 tabular-nums flex-shrink-0 mt-0.5">{l.time}</span>
-                    <span className={i === logs.length - 1 ? 'text-white font-semibold' : 'text-slate-400'}>{l.msg}</span>
+                  <div key={i} className="animate-fade-in" style={{ display: 'flex', gap: 10, fontSize: 12 }}>
+                    <span style={{ color: 'rgba(100,116,139,0.5)', flexShrink: 0, fontVariantNumeric: 'tabular-nums', marginTop: 1, fontSize: 10 }}>{l.ts}</span>
+                    <span style={{ color: i === logs.length - 1 ? '#fff' : '#94a3b8', fontWeight: i === logs.length - 1 ? 600 : 400 }}>{l.msg}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
 
-          {/* RIGHT: Report Workspace */}
-          <div className="flex-1 flex flex-col rounded-3xl overflow-hidden" style={{ background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(24px)' }}>
-            {/* Workspace Topbar */}
-            <div className="px-8 py-5 flex items-center justify-between flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
-              <div className="flex items-center gap-4">
-                <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full" style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.25)' }}>
+          {/* ─── RIGHT COLUMN: Report workspace ─── */}
+          <div style={{ flex: 1, display: 'flex', flexDirection: 'column', borderRadius: 28, overflow: 'hidden', ...glass() }}>
+            {/* Workspace header */}
+            <div style={{ padding: '18px 28px', borderBottom: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                <span style={{ fontSize: 9, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.15em', padding: '4px 10px', borderRadius: 99, background: 'rgba(99,102,241,0.12)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.22)' }}>
                   Live Workspace
                 </span>
-                <h3 className="text-base font-bold text-white flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                <span style={{ fontFamily: "'Outfit',sans-serif", fontSize: 15, fontWeight: 700, color: '#fff', display: 'flex', alignItems: 'center', gap: 8 }}>
                   {ticker ? `${ticker}_DILIGENCE_REPORT` : 'SYSTEM_IDLE'}
-                  {report && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
-                </h3>
+                  {report && <CheckCircle2 size={15} color={C.emerald} />}
+                </span>
               </div>
-              <div className="flex items-center gap-2">
-                <button className="p-2.5 rounded-xl text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all">
-                  <Download className="w-4 h-4" />
-                </button>
-                <button className="p-2.5 rounded-xl text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all">
-                  <Share2 className="w-4 h-4" />
-                </button>
-                <button className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-white/5 transition-all flex items-center gap-2" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
-                  <Globe className="w-3.5 h-3.5" /> Export PDF
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                {[Download, Share2].map((Icon, i) => (
+                  <button key={i} className="icon-btn" style={{ width: 36, height: 36, borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', color: C.textMuted, transition: 'all 0.2s' }}>
+                    <Icon size={15} />
+                  </button>
+                ))}
+                <button className="icon-btn" style={{ padding: '8px 14px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 6, color: C.textMuted, fontSize: 12, fontWeight: 600, transition: 'all 0.2s', fontFamily: 'inherit' }}>
+                  <Globe size={13} /> Export PDF
                 </button>
               </div>
             </div>
 
-            {/* Report Content */}
-            <div className="flex-1 overflow-y-auto p-8 bg-grid" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.07) transparent' }}>
+            {/* Content */}
+            <div className="bg-grid" style={{ flex: 1, overflowY: 'auto', padding: 36 }}>
               {report ? (
-                <div className="max-w-2xl mx-auto animate-slide-in" style={{ lineHeight: 1.8 }}>
-                  <div dangerouslySetInnerHTML={{ __html: report }} style={{
-                    '--report-h1-color': '#ffffff',
-                    '--report-h2-color': '#818cf8',
-                    '--report-p-color': '#cbd5e1',
-                  }} className="report-view" />
-                </div>
+                <div className="report animate-slide-up" style={{ maxWidth: 720, margin: '0 auto' }} dangerouslySetInnerHTML={{ __html: report }} />
               ) : (
-                <div className="h-full flex flex-col items-center justify-center text-center gap-5">
-                  <div className="w-20 h-20 rounded-3xl flex items-center justify-center animate-float" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
-                    <BookOpen className="w-8 h-8 text-slate-700" />
+                <div style={{ height: '100%', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center', gap: 20 }}>
+                  <div className="animate-float" style={{ width: 80, height: 80, borderRadius: 24, background: 'rgba(255,255,255,0.02)', border: `1px solid ${C.border}`, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <BookOpen size={32} color={C.textFaint} />
                   </div>
                   <div>
-                    <h3 className="text-lg font-bold text-slate-500 mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Workspace Ready</h3>
-                    <p className="text-sm text-slate-700 max-w-xs">Input a ticker on the left and trigger the agentic research pipeline.</p>
+                    <div style={{ fontFamily: "'Outfit',sans-serif", fontSize: 18, fontWeight: 700, color: C.textMuted, marginBottom: 8 }}>Workspace Ready</div>
+                    <div style={{ fontSize: 13, color: 'rgba(100,116,139,0.5)', maxWidth: 320 }}>Input a ticker to initiate the multi-agent research pipeline.</div>
                   </div>
-                  <div className="flex gap-3">
+                  <div style={{ display: 'flex', gap: 8 }}>
                     {['TSLA', 'AAPL', 'NVDA', 'MSFT'].map(t => (
-                      <button key={t} onClick={() => setTicker(t)} className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white rounded-xl transition-all hover:bg-white/5" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+                      <button key={t} className="chip-btn" onClick={() => setTicker(t)} style={{ padding: '8px 16px', borderRadius: 10, background: 'rgba(255,255,255,0.04)', border: `1px solid ${C.border}`, color: C.textMuted, fontSize: 12, fontWeight: 700, cursor: 'pointer', transition: 'all 0.2s', letterSpacing: '0.05em', fontFamily: 'inherit' }}>
                         {t}
                       </button>
                     ))}
@@ -298,39 +333,22 @@ export default function App() {
               )}
             </div>
 
-            {/* Footer Bar */}
-            <div className="px-8 py-4 flex items-center justify-between flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(2,6,23,0.5)' }}>
-              <div className="flex items-center gap-6">
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
-                  <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">CFA Std V(A) Active</span>
-                </div>
-                <div className="flex items-center gap-2">
-                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-                  <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">SEC EDGAR · Real-time</span>
-                </div>
+            {/* Footer */}
+            <div style={{ padding: '14px 28px', borderTop: `1px solid ${C.border}`, background: 'rgba(2,6,23,0.5)', display: 'flex', alignItems: 'center', justifyContent: 'space-between', flexShrink: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
+                {[['CFA Std V(A) Active', C.primary], ['SEC EDGAR · Real-time', C.emerald]].map(([lbl, clr]) => (
+                  <div key={lbl} style={{ display: 'flex', alignItems: 'center', gap: 7 }}>
+                    <div style={{ width: 6, height: 6, borderRadius: '50%', background: clr }} />
+                    <span style={{ fontSize: 9, fontWeight: 700, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.15em' }}>{lbl}</span>
+                  </div>
+                ))}
               </div>
-              <p className="text-[10px] text-slate-800 font-bold uppercase tracking-[0.2em]">© 2026 NeuroPress AI Research</p>
+              <span style={{ fontSize: 9, color: 'rgba(30,41,59,1)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>© 2026 NeuroPress AI Research</span>
             </div>
           </div>
 
         </div>
       </div>
-
-      {/* Global Report Styles */}
-      <style>{`
-        .report-view h1 { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
-        .report-view h2 { font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2.5rem; margin-bottom: 0.75rem; }
-        .report-view p { color: #94a3b8; margin-bottom: 1rem; line-height: 1.8; }
-        .report-view blockquote { padding: 1rem 1.5rem; border-left: 3px solid #6366f1; background: rgba(99,102,241,0.07); border-radius: 12px; color: #c7d2fe; font-style: italic; margin: 1.5rem 0; }
-        .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0); background-size: 32px 32px; }
-        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
-        @keyframes slide-in { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
-        @keyframes fade-in { from{opacity:0} to{opacity:1} }
-        .animate-float { animation: float 5s ease-in-out infinite; }
-        .animate-slide-in { animation: slide-in 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
-        .animate-fade-in { animation: fade-in 0.3s ease forwards; }
-      `}</style>
     </div>
   );
 }
