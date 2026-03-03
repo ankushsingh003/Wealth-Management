@@ -1,330 +1,336 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import {
   Search, Loader2, BookOpen, BarChart3, ShieldCheck,
   FileText, ChevronRight, Share2, Download,
   LayoutDashboard, PieChart, Activity, Settings,
-  ExternalLink, TrendingUp, AlertCircle, CheckCircle2,
-  Globe, Zap
+  TrendingUp, Globe, Zap, CheckCircle2, Clock
 } from 'lucide-react';
 
-const SidebarItem = ({ icon: Icon, label, active = false, comingSoon = false }) => (
-  <div className={`
-    flex items-center gap-3 px-4 py-3 rounded-xl cursor-not-allowed transition-all duration-300 group
-    ${active ? 'bg-primary text-white shadow-lg shadow-primary/20' : 'text-slate-400 hover:text-slate-200 hover:bg-white/5'}
-  `}>
-    <Icon className={`w-5 h-5 ${active ? 'text-white' : 'group-hover:text-primary-light transition-colors'}`} />
-    <span className="font-medium text-sm">{label}</span>
-    {comingSoon && (
-      <span className="ml-auto text-[10px] bg-slate-800 text-slate-500 px-1.5 py-0.5 rounded border border-slate-700">SOON</span>
+// ─── Sidebar Item ─────────────────────────────────────────────────────────────
+const NavItem = ({ icon: Icon, label, active = false, soon = false }) => (
+  <button
+    disabled
+    className={[
+      'flex items-center gap-3 w-full px-4 py-3 rounded-xl transition-all duration-200 text-left cursor-not-allowed',
+      active
+        ? 'bg-indigo-600 text-white shadow-lg'
+        : 'text-slate-500 hover:text-slate-300 hover:bg-white/5',
+    ].join(' ')}
+  >
+    <Icon className={`w-5 h-5 flex-shrink-0 ${active ? 'text-white' : 'text-slate-500'}`} />
+    <span className="text-sm font-semibold">{label}</span>
+    {soon && (
+      <span className="ml-auto text-[9px] font-bold tracking-widest uppercase bg-slate-800 text-slate-600 border border-slate-700 px-1.5 py-0.5 rounded">
+        Soon
+      </span>
     )}
+  </button>
+);
+
+// ─── Status Pill ──────────────────────────────────────────────────────────────
+const StatusPill = ({ ok = true }) => (
+  <div className={`flex items-center gap-2 px-3 py-1.5 rounded-full border text-[10px] font-bold uppercase tracking-widest ${ok ? 'bg-emerald-500/10 border-emerald-500/20 text-emerald-400' : 'bg-rose-500/10 border-rose-500/20 text-rose-400'}`}>
+    <span className={`w-1.5 h-1.5 rounded-full ${ok ? 'bg-emerald-400 animate-pulse' : 'bg-rose-400'}`} />
+    {ok ? 'Systems Nominal' : 'Degraded'}
   </div>
 );
 
-const App = () => {
+// ─── Main App ─────────────────────────────────────────────────────────────────
+export default function App() {
   const [ticker, setTicker] = useState('');
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState(null);
-  const [status, setStatus] = useState([]);
-  const [currentTime, setCurrentTime] = useState(new Date());
+  const [logs, setLogs] = useState([]);
+  const [time, setTime] = useState(new Date());
+  const consoleRef = useRef(null);
 
   useEffect(() => {
-    const timer = setInterval(() => setCurrentTime(new Date()), 1000);
-    return () => clearInterval(timer);
+    const t = setInterval(() => setTime(new Date()), 1000);
+    return () => clearInterval(t);
   }, []);
+
+  useEffect(() => {
+    if (consoleRef.current) {
+      consoleRef.current.scrollTop = consoleRef.current.scrollHeight;
+    }
+  }, [logs]);
+
+  const addLog = (msg) => setLogs(prev => [...prev, { msg, time: new Date().toLocaleTimeString() }]);
 
   const handleResearch = async () => {
     if (!ticker) return;
     setLoading(true);
     setReport(null);
-    setStatus(["Initializing high-level audit agents...", "Connecting to SEC EDGAR API...", "Accessing global news sentiment buffers..."]);
+    setLogs([]);
+
+    const steps = [
+      'Initializing agent orchestration nodes...',
+      `Connecting to SEC EDGAR for ${ticker}...`,
+      'Fetching 10-K / 10-Q primary documents...',
+      'Spawning News Sentiment Analyzer...',
+      'Running CFA Standard V(A) compliance check...',
+      'Synthesizing consolidated research report...',
+    ];
+
+    for (const step of steps) {
+      addLog(step);
+      await new Promise(r => setTimeout(r, 600));
+    }
 
     try {
-      // Small Delay simulation for realistic agent orchestration feel
-      await new Promise(r => setTimeout(r, 1500));
-
-      const response = await fetch('http://localhost:8000/research', {
+      const res = await fetch('http://localhost:8000/research', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ticker }),
       });
-      const data = await response.json();
-
-      // Step through status for premium vibe
-      setStatus(prev => [...prev, "Analyzing 10-K Filings for MDA...", "Calculating sentiment polarity index..."]);
-      await new Promise(r => setTimeout(r, 1000));
-
+      const data = await res.json();
       setReport(data.final_report);
-      setStatus(data.messages || ["Research completed successfully.", "CFA Compliance Check: PASSED"]);
-    } catch (error) {
-      console.error(error);
-      setStatus(["System Error: Connection to backend timed out.", "Please ensure the research server is online."]);
+      addLog('✓ Report generated. CFA audit complete.');
+    } catch {
+      addLog('✗ Connection error. Ensure the backend server is running on port 8000.');
     } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="flex min-h-screen bg-background text-slate-200 font-sans antialiased overflow-hidden">
-      {/* Background Orbs */}
-      <div className="fixed inset-0 pointer-events-none">
-        <div className="absolute top-[-10%] left-[-5%] w-[500px] h-[500px] bg-primary/20 blur-[120px] rounded-full animate-pulse" />
-        <div className="absolute bottom-[10%] right-[5%] w-[400px] h-[400px] bg-accent-emerald/10 blur-[100px] rounded-full" />
+    <div className="flex h-screen overflow-hidden" style={{ background: '#020617', color: '#e2e8f0', fontFamily: "'Inter', system-ui, sans-serif" }}>
+
+      {/* ── Background Orbs ── */}
+      <div className="fixed inset-0 pointer-events-none overflow-hidden z-0">
+        <div style={{ position: 'absolute', top: '-15%', left: '-10%', width: 600, height: 600, background: 'radial-gradient(circle, rgba(79,70,229,0.18) 0%, transparent 70%)', borderRadius: '50%' }} />
+        <div style={{ position: 'absolute', bottom: '-10%', right: '5%', width: 500, height: 500, background: 'radial-gradient(circle, rgba(16,185,129,0.10) 0%, transparent 70%)', borderRadius: '50%' }} />
       </div>
 
-      {/* Sidebar */}
-      <aside className="w-72 bg-surface/50 backdrop-blur-xl border-r border-white/5 flex flex-col p-6 z-20">
-        <div className="flex items-center gap-3 mb-10 px-2">
-          <div className="w-10 h-10 bg-gradient-to-br from-primary to-primary-dark rounded-xl flex items-center justify-center shadow-lg shadow-primary/30">
-            <ShieldCheck className="w-6 h-6 text-white" />
+      {/* ── Sidebar ── */}
+      <aside className="w-72 flex-shrink-0 flex flex-col z-10 relative" style={{ background: 'rgba(15,23,42,0.7)', borderRight: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(24px)' }}>
+        {/* Logo */}
+        <div className="px-7 pt-8 pb-6 flex items-center gap-3">
+          <div className="w-10 h-10 rounded-xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #6366f1, #4338ca)', boxShadow: '0 8px 32px rgba(99,102,241,0.35)' }}>
+            <ShieldCheck className="w-5 h-5 text-white" />
           </div>
           <div>
-            <h1 className="font-display font-extrabold text-xl tracking-tight text-white leading-none">NEURO<span className="text-primary-light">PRESS</span></h1>
-            <p className="text-[10px] text-slate-500 font-bold tracking-widest uppercase mt-1">Wealth Management</p>
+            <p className="text-white font-bold text-lg leading-none" style={{ fontFamily: "'Outfit', sans-serif" }}>
+              NEURO<span style={{ color: '#6366f1' }}>PRESS</span>
+            </p>
+            <p className="text-[10px] text-slate-600 uppercase tracking-[0.2em] font-bold mt-0.5">Wealth · Research</p>
           </div>
         </div>
 
-        <nav className="flex-1 space-y-2">
-          <SidebarItem icon={LayoutDashboard} label="Research Terminal" active />
-          <SidebarItem icon={Activity} label="Live Orchestration" comingSoon />
-          <SidebarItem icon={PieChart} label="Portfolio Diligence" comingSoon />
-          <SidebarItem icon={TrendingUp} label="Market Sentiment" comingSoon />
-          <SidebarItem icon={ShieldCheck} label="Compliance Hub" comingSoon />
+        {/* Nav */}
+        <nav className="flex-1 px-4 space-y-1.5">
+          <NavItem icon={LayoutDashboard} label="Research Terminal" active />
+          <NavItem icon={Activity} label="Live Orchestration" soon />
+          <NavItem icon={PieChart} label="Portfolio Diligence" soon />
+          <NavItem icon={TrendingUp} label="Market Sentiment" soon />
+          <NavItem icon={ShieldCheck} label="Compliance Hub" soon />
         </nav>
 
-        <div className="mt-auto p-4 bg-white/5 rounded-2xl border border-white/5">
+        {/* User Card */}
+        <div className="m-4 p-4 rounded-2xl" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="flex items-center gap-3 mb-3">
-            <div className="w-8 h-8 rounded-full bg-slate-700 overflow-hidden">
-              <img src="https://ui-avatars.com/api/?name=User&background=6366f1&color=fff" alt="User" />
-            </div>
+            <img src="https://ui-avatars.com/api/?name=Research+Desk&background=4f46e5&color=fff&size=36&bold=true" className="w-9 h-9 rounded-lg" alt="Avatar" />
             <div>
               <p className="text-xs font-bold text-white">Institutional Plan</p>
-              <p className="text-[10px] text-slate-500 uppercase tracking-wider">Research Desk 04</p>
+              <p className="text-[10px] text-slate-500 uppercase tracking-widest">Research Desk</p>
             </div>
           </div>
-          <button className="w-full py-2 bg-slate-800 hover:bg-slate-700 rounded-lg text-xs font-semibold transition-colors flex items-center justify-center gap-2">
-            <Settings className="w-3.5 h-3.5" /> System Config
+          <button className="w-full py-2 text-xs font-semibold text-slate-400 rounded-lg flex items-center justify-center gap-2 transition-all hover:bg-white/5">
+            <Settings className="w-3.5 h-3.5" /> System Configuration
           </button>
         </div>
       </aside>
 
-      {/* Main Content */}
-      <main className="flex-1 flex flex-col relative z-10 overflow-hidden">
-        {/* Top Header */}
-        <header className="h-20 border-b border-white/5 flex items-center justify-between px-8 bg-surface/30 backdrop-blur-md">
-          <div className="flex items-center gap-2 text-xs font-medium text-slate-400">
-            <BookOpen className="w-4 h-4" />
-            <span>Research Desktop</span>
-            <ChevronRight className="w-3 h-3 text-slate-600" />
-            <span className="text-white">Active Analysis</span>
-          </div>
+      {/* ── Main Content ── */}
+      <div className="flex-1 flex flex-col overflow-hidden relative z-10">
 
-          <div className="flex items-center gap-6">
+        {/* ── Top Bar ── */}
+        <header className="h-18 flex items-center justify-between px-8 py-4 flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)', background: 'rgba(15,23,42,0.4)', backdropFilter: 'blur(16px)' }}>
+          <div className="flex items-center gap-2 text-xs text-slate-500">
+            <LayoutDashboard className="w-4 h-4" />
+            <span>Platform</span>
+            <ChevronRight className="w-3 h-3" />
+            <span className="text-white font-semibold">Research Terminal</span>
+          </div>
+          <div className="flex items-center gap-5">
             <div className="text-right">
-              <p className="text-xs font-bold text-white uppercase tracking-wider">{currentTime.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</p>
-              <p className="text-[10px] text-slate-500">UTC-5 | New York</p>
+              <p className="text-sm font-bold text-white tabular-nums">{time.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' })}</p>
+              <p className="text-[10px] text-slate-600 uppercase tracking-widest">Market Hours Closed</p>
             </div>
-            <div className="h-8 w-[1px] bg-white/10" />
-            <div className="flex items-center gap-2 bg-accent-emerald/10 px-3 py-1.5 rounded-full border border-accent-emerald/20">
-              <div className="w-1.5 h-1.5 rounded-full bg-accent-emerald animate-pulse" />
-              <span className="text-[10px] font-bold text-accent-emerald uppercase tracking-widest">Network Nominal</span>
-            </div>
+            <StatusPill ok />
           </div>
         </header>
 
-        {/* Console & Content Area */}
-        <div className="flex-1 flex p-8 gap-8 overflow-hidden">
+        {/* ── Body ── */}
+        <div className="flex-1 flex gap-6 p-6 overflow-hidden">
 
-          {/* Analysis Controller */}
-          <div className="w-96 flex flex-col gap-6">
-            <section className="bg-surface/40 rounded-3xl p-8 border border-white/5 shadow-2xl relative overflow-hidden group">
-              <div className="absolute top-0 right-0 p-8 text-primary/10 group-hover:text-primary/20 transition-colors">
-                <Search className="w-32 h-32 -rotate-12 translate-x-12 -translate-y-12" />
+          {/* LEFT: Input + Console */}
+          <div className="w-80 flex-shrink-0 flex flex-col gap-4">
+
+            {/* Input Panel */}
+            <div className="rounded-2xl p-6 flex flex-col gap-5 relative overflow-hidden" style={{ background: 'rgba(15,23,42,0.7)', border: '1px solid rgba(255,255,255,0.07)', backdropFilter: 'blur(24px)' }}>
+              <div className="absolute top-0 right-0 opacity-[0.04] pointer-events-none">
+                <Search style={{ width: 160, height: 160, transform: 'translate(30%, -30%) rotate(-10deg)' }} />
+              </div>
+              <div>
+                <h2 className="text-xl font-bold text-white mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Agentic Initiation</h2>
+                <p className="text-xs text-slate-500 leading-relaxed">Execute CFA-compliant due diligence on any global equity ticker.</p>
               </div>
 
-              <h2 className="text-2xl font-display font-bold text-white mb-2 relative">Agentic Initiation</h2>
-              <p className="text-sm text-slate-400 mb-8 relative">Execute CFA-compliant due diligence on global equity tickers.</p>
-
-              <div className="space-y-6 relative">
-                <div>
-                  <label className="text-[10px] font-bold text-slate-500 uppercase tracking-widest block mb-1.5 ml-1">Asset Identifier</label>
-                  <div className="relative">
-                    <input
-                      type="text"
-                      placeholder="e.g. MSFT, GOOGL..."
-                      value={ticker}
-                      onChange={(e) => setTicker(e.target.value.toUpperCase())}
-                      className="w-full bg-slate-900/50 border border-white/10 rounded-2xl py-4 pl-12 pr-4 focus:outline-none focus:ring-2 focus:ring-primary/50 text-white font-bold tracking-widest placeholder:text-slate-700 transition-all font-display"
-                    />
-                    <Zap className="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-primary" />
-                  </div>
+              <div>
+                <label className="block text-[10px] font-bold text-slate-600 uppercase tracking-[0.15em] mb-2">Asset Identifier</label>
+                <div className="relative">
+                  <Zap className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4" style={{ color: '#6366f1' }} />
+                  <input
+                    type="text"
+                    placeholder="TSLA, AAPL, MSFT…"
+                    value={ticker}
+                    onChange={e => setTicker(e.target.value.toUpperCase())}
+                    onKeyDown={e => e.key === 'Enter' && handleResearch()}
+                    className="w-full rounded-xl py-3 pl-10 pr-4 text-white font-bold text-sm placeholder-slate-700 outline-none focus:ring-2"
+                    style={{ background: 'rgba(2,6,23,0.8)', border: '1px solid rgba(255,255,255,0.08)', letterSpacing: '0.08em', transition: 'all 0.2s' }}
+                  />
                 </div>
-
-                <button
-                  onClick={handleResearch}
-                  disabled={loading || !ticker}
-                  className="w-full py-4 bg-gradient-to-r from-primary to-primary-dark hover:brightness-110 disabled:grayscale disabled:opacity-50 text-white font-bold rounded-2xl transition-all shadow-xl shadow-primary/20 flex items-center justify-center gap-3 overflow-hidden group"
-                >
-                  {loading ? (
-                    <>
-                      <Loader2 className="w-5 h-5 animate-spin" />
-                      <span className="animate-pulse">Orchestrating...</span>
-                    </>
-                  ) : (
-                    <>
-                      <LayoutDashboard className="w-5 h-5 group-hover:scale-110 transition-transform" />
-                      <span>Start Research Pipeline</span>
-                    </>
-                  )}
-                </button>
-              </div>
-            </section>
-
-            {/* Orchestration Log */}
-            <section className="flex-1 bg-slate-900/40 rounded-3xl p-6 border border-white/5 flex flex-col overflow-hidden">
-              <div className="flex items-center justify-between mb-4">
-                <h3 className="text-xs font-bold text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                  <Activity className="w-4 h-4" /> Agent Console
-                </h3>
-                {loading && <div className="text-[10px] text-primary animate-pulse font-bold tracking-widest uppercase">Busy</div>}
               </div>
 
-              <div className="flex-1 overflow-y-auto space-y-4 pr-2 custom-scrollbar">
-                {status.length === 0 ? (
-                  <div className="h-full flex flex-col items-center justify-center text-center opacity-30 select-none">
-                    <Terminal className="w-12 h-12 mb-3 text-slate-600" />
-                    <p className="text-xs font-medium">Awaiting mission parameters...</p>
+              <button
+                onClick={handleResearch}
+                disabled={loading || !ticker}
+                className="w-full py-3.5 rounded-xl font-bold text-sm text-white flex items-center justify-center gap-2 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+                style={{ background: 'linear-gradient(135deg, #6366f1, #4338ca)', boxShadow: loading ? 'none' : '0 8px 32px rgba(99,102,241,0.35)' }}
+              >
+                {loading ? <><Loader2 className="w-4 h-4 animate-spin" /><span>Orchestrating Agents…</span></> : <><LayoutDashboard className="w-4 h-4" /><span>Start Research Pipeline</span></>}
+              </button>
+
+              {/* Stats Row */}
+              <div className="grid grid-cols-2 gap-3 pt-1">
+                {[
+                  { label: 'Data Sources', value: '4 Active' },
+                  { label: 'CFA Standard', value: 'V(A)' },
+                ].map(s => (
+                  <div key={s.label} className="rounded-xl p-3 text-center" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.05)' }}>
+                    <p className="text-xs font-bold text-white">{s.value}</p>
+                    <p className="text-[10px] text-slate-600 mt-0.5">{s.label}</p>
                   </div>
-                ) : (
-                  status.map((msg, i) => (
-                    <div key={i} className="flex gap-3 text-xs leading-relaxed group">
-                      <div className="h-5 w-5 rounded-lg bg-white/5 border border-white/5 flex-shrink-0 flex items-center justify-center text-[10px] font-bold text-primary-light">
-                        {i + 1}
-                      </div>
-                      <div className="flex flex-col">
-                        <span className="text-slate-300 group-last:text-white group-last:font-bold transition-colors">{msg}</span>
-                        <span className="text-[8px] text-slate-600 mt-0.5">{new Date().toLocaleTimeString()}</span>
-                      </div>
-                    </div>
-                  ))
-                )}
-                <div ref={(el) => el?.scrollIntoView({ behavior: 'smooth' })} />
+                ))}
               </div>
-            </section>
+            </div>
+
+            {/* Agent Console */}
+            <div className="flex-1 rounded-2xl flex flex-col overflow-hidden" style={{ background: 'rgba(2,6,23,0.8)', border: '1px solid rgba(255,255,255,0.06)' }}>
+              <div className="px-5 py-4 flex items-center justify-between flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+                <div className="flex items-center gap-2">
+                  <Activity className="w-4 h-4" style={{ color: '#6366f1' }} />
+                  <span className="text-xs font-bold text-slate-400 uppercase tracking-widest">Agent Console</span>
+                </div>
+                {loading && <span className="text-[10px] font-bold uppercase tracking-widest animate-pulse" style={{ color: '#6366f1' }}>● Live</span>}
+              </div>
+
+              <div ref={consoleRef} className="flex-1 overflow-y-auto p-4 space-y-3" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.07) transparent' }}>
+                {logs.length === 0 ? (
+                  <div className="h-full flex flex-col items-center justify-center text-center opacity-30 select-none gap-3">
+                    <FileText className="w-10 h-10 text-slate-700" />
+                    <p className="text-xs text-slate-500">Awaiting mission parameters…</p>
+                  </div>
+                ) : logs.map((l, i) => (
+                  <div key={i} className="flex gap-3 text-xs animate-fade-in">
+                    <span className="text-slate-700 tabular-nums flex-shrink-0 mt-0.5">{l.time}</span>
+                    <span className={i === logs.length - 1 ? 'text-white font-semibold' : 'text-slate-400'}>{l.msg}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
           </div>
 
-          {/* Analysis Workspace */}
-          <div className="flex-1 flex flex-col">
-            <div className="h-full bg-surface/40 backdrop-blur-sm border border-white/5 rounded-[40px] overflow-hidden flex flex-col shadow-2xl">
-              <div className="px-10 py-6 border-b border-white/5 flex items-center justify-between bg-white/[0.02]">
-                <div className="flex items-center gap-4">
-                  <div className="px-3 py-1 bg-primary/10 rounded-full border border-primary/20">
-                    <span className="text-[10px] font-bold text-primary uppercase tracking-widest">Active File</span>
-                  </div>
-                  <h3 className="text-lg font-display font-bold text-white flex items-center gap-2">
-                    {ticker ? `${ticker}_DILIGENCE_RPT.v1` : 'SYSTEM_IDLE'}
-                    {report && <CheckCircle2 className="w-4 h-4 text-accent-emerald" />}
-                  </h3>
-                </div>
+          {/* RIGHT: Report Workspace */}
+          <div className="flex-1 flex flex-col rounded-3xl overflow-hidden" style={{ background: 'rgba(15,23,42,0.5)', border: '1px solid rgba(255,255,255,0.06)', backdropFilter: 'blur(24px)' }}>
+            {/* Workspace Topbar */}
+            <div className="px-8 py-5 flex items-center justify-between flex-shrink-0" style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}>
+              <div className="flex items-center gap-4">
+                <span className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest rounded-full" style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.25)' }}>
+                  Live Workspace
+                </span>
+                <h3 className="text-base font-bold text-white flex items-center gap-2" style={{ fontFamily: "'Outfit', sans-serif" }}>
+                  {ticker ? `${ticker}_DILIGENCE_REPORT` : 'SYSTEM_IDLE'}
+                  {report && <CheckCircle2 className="w-4 h-4 text-emerald-400" />}
+                </h3>
+              </div>
+              <div className="flex items-center gap-2">
+                <button className="p-2.5 rounded-xl text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all">
+                  <Download className="w-4 h-4" />
+                </button>
+                <button className="p-2.5 rounded-xl text-slate-500 hover:text-slate-300 hover:bg-white/5 transition-all">
+                  <Share2 className="w-4 h-4" />
+                </button>
+                <button className="px-4 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:bg-white/5 transition-all flex items-center gap-2" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+                  <Globe className="w-3.5 h-3.5" /> Export PDF
+                </button>
+              </div>
+            </div>
 
-                <div className="flex items-center gap-3">
-                  <button className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 transition-all">
-                    <Download className="w-5 h-5" />
-                  </button>
-                  <button className="p-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-slate-400 transition-all">
-                    <Share2 className="w-5 h-5" />
-                  </button>
-                  <div className="w-[1px] h-6 bg-white/10 mx-1" />
-                  <button className="px-5 py-2.5 bg-white/5 hover:bg-white/10 rounded-xl text-xs font-bold text-white transition-all flex items-center gap-2 border border-white/5">
-                    <Globe className="w-3.5 h-3.5" /> Full Screen
-                  </button>
+            {/* Report Content */}
+            <div className="flex-1 overflow-y-auto p-8 bg-grid" style={{ scrollbarWidth: 'thin', scrollbarColor: 'rgba(255,255,255,0.07) transparent' }}>
+              {report ? (
+                <div className="max-w-2xl mx-auto animate-slide-in" style={{ lineHeight: 1.8 }}>
+                  <div dangerouslySetInnerHTML={{ __html: report }} style={{
+                    '--report-h1-color': '#ffffff',
+                    '--report-h2-color': '#818cf8',
+                    '--report-p-color': '#cbd5e1',
+                  }} className="report-view" />
+                </div>
+              ) : (
+                <div className="h-full flex flex-col items-center justify-center text-center gap-5">
+                  <div className="w-20 h-20 rounded-3xl flex items-center justify-center animate-float" style={{ background: 'rgba(255,255,255,0.03)', border: '1px solid rgba(255,255,255,0.06)' }}>
+                    <BookOpen className="w-8 h-8 text-slate-700" />
+                  </div>
+                  <div>
+                    <h3 className="text-lg font-bold text-slate-500 mb-1" style={{ fontFamily: "'Outfit', sans-serif" }}>Workspace Ready</h3>
+                    <p className="text-sm text-slate-700 max-w-xs">Input a ticker on the left and trigger the agentic research pipeline.</p>
+                  </div>
+                  <div className="flex gap-3">
+                    {['TSLA', 'AAPL', 'NVDA', 'MSFT'].map(t => (
+                      <button key={t} onClick={() => setTicker(t)} className="px-4 py-2 text-xs font-bold text-slate-400 hover:text-white rounded-xl transition-all hover:bg-white/5" style={{ border: '1px solid rgba(255,255,255,0.07)' }}>
+                        {t}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Footer Bar */}
+            <div className="px-8 py-4 flex items-center justify-between flex-shrink-0" style={{ borderTop: '1px solid rgba(255,255,255,0.05)', background: 'rgba(2,6,23,0.5)' }}>
+              <div className="flex items-center gap-6">
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-indigo-500" />
+                  <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">CFA Std V(A) Active</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <div className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+                  <span className="text-[10px] font-bold text-slate-600 uppercase tracking-widest">SEC EDGAR · Real-time</span>
                 </div>
               </div>
-
-              <div className="flex-1 p-10 overflow-y-auto bg-grid-pattern selection:bg-primary/30">
-                {report ? (
-                  <div className="max-w-3xl mx-auto report-content slide-up">
-                    <div
-                      className="prose prose-invert prose-slate max-w-none 
-                        prose-h1:font-display prose-h1:text-4xl prose-h1:tracking-tight prose-h1:mb-8
-                        prose-h2:text-primary-light prose-h2:font-display prose-h2:text-xl prose-h2:tracking-wider prose-h2:uppercase prose-h2:mb-4 prose-h2:mt-12
-                        prose-p:text-slate-300 prose-p:leading-extra-relaxed prose-p:mb-6
-                        prose-blockquote:border-primary prose-blockquote:bg-primary/5 prose-blockquote:p-6 prose-blockquote:rounded-2xl prose-blockquote:italic
-                      "
-                      dangerouslySetInnerHTML={{ __html: report }}
-                    />
-                  </div>
-                ) : (
-                  <div className="h-full flex flex-col items-center justify-center text-center">
-                    <div className="w-24 h-24 bg-gradient-to-br from-white/5 to-transparent rounded-3xl flex items-center justify-center border border-white/5 mb-6 animate-float">
-                      <FileText className="w-10 h-10 text-slate-700" />
-                    </div>
-                    <h3 className="text-xl font-display font-bold text-slate-500 mb-2">Workspace Ready</h3>
-                    <p className="text-sm text-slate-600 max-w-sm">Please input a target ticker to initiate the synthesis of massive datasets from SEC filings and global sentiment buffers.</p>
-                  </div>
-                )}
-              </div>
-
-              <footer className="px-10 py-5 border-t border-white/5 bg-slate-950/50 flex items-center justify-between">
-                <div className="flex items-center gap-8">
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-primary" />
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">CFA Standard V(A) - Compliance Active</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="w-1.5 h-1.5 rounded-full bg-accent-emerald" />
-                    <span className="text-[10px] font-bold text-slate-500 uppercase tracking-widest italic">SEC Feed: Real-time</span>
-                  </div>
-                </div>
-                <div className="text-[10px] text-slate-700 font-bold uppercase tracking-[0.2em]">© 2026 NeuroPress AI Research</div>
-              </footer>
+              <p className="text-[10px] text-slate-800 font-bold uppercase tracking-[0.2em]">© 2026 NeuroPress AI Research</p>
             </div>
           </div>
 
         </div>
-      </main>
+      </div>
 
-      <style jsx>{`
-        .bg-grid-pattern {
-          background-image: radial-gradient(circle at 2px 2px, rgba(255,255,255,0.03) 1px, transparent 0);
-          background-size: 40px 40px;
-        }
-        .slide-up {
-          animation: slideUp 0.5s cubic-bezier(0.16, 1, 0.3, 1);
-        }
-        @keyframes slideUp {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @keyframes float {
-          0% { transform: translateY(0px); }
-          50% { transform: translateY(-10px); }
-          100% { transform: translateY(0px); }
-        }
-        .animate-float {
-          animation: float 4s ease-in-out infinite;
-        }
-        .custom-scrollbar::-webkit-scrollbar {
-          width: 4px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-track {
-          background: transparent;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb {
-          background: rgba(255, 255, 255, 0.05);
-          border-radius: 10px;
-        }
-        .custom-scrollbar::-webkit-scrollbar-thumb:hover {
-          background: rgba(255, 255, 255, 0.1);
-        }
+      {/* Global Report Styles */}
+      <style>{`
+        .report-view h1 { font-family: 'Outfit', sans-serif; font-size: 2rem; font-weight: 800; color: #fff; margin-bottom: 1.5rem; letter-spacing: -0.02em; }
+        .report-view h2 { font-family: 'Outfit', sans-serif; font-size: 0.9rem; font-weight: 700; color: #818cf8; text-transform: uppercase; letter-spacing: 0.1em; margin-top: 2.5rem; margin-bottom: 0.75rem; }
+        .report-view p { color: #94a3b8; margin-bottom: 1rem; line-height: 1.8; }
+        .report-view blockquote { padding: 1rem 1.5rem; border-left: 3px solid #6366f1; background: rgba(99,102,241,0.07); border-radius: 12px; color: #c7d2fe; font-style: italic; margin: 1.5rem 0; }
+        .bg-grid { background-image: radial-gradient(circle at 1px 1px, rgba(255,255,255,0.03) 1px, transparent 0); background-size: 32px 32px; }
+        @keyframes float { 0%,100%{transform:translateY(0)} 50%{transform:translateY(-10px)} }
+        @keyframes slide-in { from{opacity:0;transform:translateY(16px)} to{opacity:1;transform:translateY(0)} }
+        @keyframes fade-in { from{opacity:0} to{opacity:1} }
+        .animate-float { animation: float 5s ease-in-out infinite; }
+        .animate-slide-in { animation: slide-in 0.5s cubic-bezier(0.16,1,0.3,1) forwards; }
+        .animate-fade-in { animation: fade-in 0.3s ease forwards; }
       `}</style>
     </div>
   );
-};
-
-const Terminal = ({ className }) => (
-  <svg className={className} fill="none" viewBox="0 0 24 24" stroke="currentColor">
-    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M8 9l3 3-3 3m5 0h3M5 20h14a2 2 0 002-2V6a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
-  </svg>
-);
-
-export default App;
+}
