@@ -362,9 +362,9 @@ export default function App() {
               <span style={{ fontSize: 9, color: 'rgba(30,41,59,1)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>© 2026 WealthIQ Agentic Research</span>
             </div>
           </div>
-
-        </div></div>}
+        </div>
+        )}
+      </div>
     </div>
-    </div >
   );
 }
