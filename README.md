@@ -1,4 +1,4 @@
-# 🛡️ NeuroPress Wealth — Agentic AI Research Platform
+# 🛡️ WealthIQ — Agentic AI Research Platform
 
 > **Automated CFA-Compliant Due Diligence** powered by LangGraph multi-agent orchestration.  
 > Synthesizes SEC EDGAR filings and real-time news sentiment into professional research reports.
@@ -161,7 +161,7 @@ This platform is architected around **CFA Institute Code of Ethics & Standards o
 
 ## 📜 License
 
-MIT License — © 2026 NeuroPress AI Research
+MIT License — © 2026 WealthIQ Agentic Research
 
 ---
 

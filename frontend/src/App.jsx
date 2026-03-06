@@ -155,8 +155,8 @@ export default function App() {
             <ShieldCheck size={20} color="#fff" />
           </div>
           <div>
-            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 18, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1 }}>NEURO<span style={{ color: C.primary }}>PRESS</span></div>
-            <div style={{ fontSize: 9, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: 4, fontWeight: 700 }}>Wealth · Research</div>
+            <div style={{ fontFamily: "'Outfit',sans-serif", fontWeight: 800, fontSize: 18, color: '#fff', letterSpacing: '-0.02em', lineHeight: 1 }}>WEALTH<span style={{ color: C.primary }}>IQ</span></div>
+            <div style={{ fontSize: 9, color: C.textMuted, textTransform: 'uppercase', letterSpacing: '0.2em', marginTop: 4, fontWeight: 700 }}>Agentic Research · CFA</div>
           </div>
         </div>
 
@@ -344,7 +344,7 @@ export default function App() {
                   </div>
                 ))}
               </div>
-              <span style={{ fontSize: 9, color: 'rgba(30,41,59,1)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>© 2026 NeuroPress AI Research</span>
+              <span style={{ fontSize: 9, color: 'rgba(30,41,59,1)', fontWeight: 700, letterSpacing: '0.2em', textTransform: 'uppercase' }}>© 2026 WealthIQ Agentic Research</span>
             </div>
           </div>
 
