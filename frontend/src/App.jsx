@@ -1,10 +1,14 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import {
-  Search, Loader2, BookOpen, BarChart3, ShieldCheck,
+  Search, Loader2, BookOpen, ShieldCheck,
   FileText, Download, Share2, LayoutDashboard, PieChart,
   Activity, Settings, TrendingUp, Globe, Zap, CheckCircle2,
   ChevronRight,
 } from 'lucide-react';
+import LiveOrchestration from './pages/LiveOrchestration';
+import PortfolioDiligence from './pages/PortfolioDiligence';
+import MarketSentiment from './pages/MarketSentiment';
+import ComplianceHub from './pages/ComplianceHub';
 
 // ─── Color palette ────────────────────────────────────────────────────────────
 const C = {
@@ -31,35 +35,40 @@ const glass = (extra = {}) => ({
 });
 
 // ─── Sidebar NavItem ──────────────────────────────────────────────────────────
-function NavItem({ icon: Icon, label, active = false, soon = false }) {
+function NavItem({ icon: Icon, label, active = false, onClick }) {
   return (
-    <div style={{
-      display: 'flex', alignItems: 'center', gap: 12,
-      padding: '11px 16px', borderRadius: 14, cursor: 'default',
-      background: active ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : 'transparent',
-      color: active ? '#fff' : C.textMuted,
-      boxShadow: active ? `0 8px 24px rgba(99,102,241,0.25)` : 'none',
-      transition: 'all 0.2s',
-    }}>
+    <div
+      onClick={onClick}
+      style={{
+        display: 'flex', alignItems: 'center', gap: 12,
+        padding: '11px 16px', borderRadius: 14, cursor: 'pointer',
+        background: active ? `linear-gradient(135deg, ${C.primary}, ${C.primaryDark})` : 'transparent',
+        color: active ? '#fff' : C.textMuted,
+        boxShadow: active ? `0 8px 24px rgba(99,102,241,0.25)` : 'none',
+        transition: 'all 0.2s',
+        userSelect: 'none',
+      }}
+    >
       <Icon size={16} />
       <span style={{ fontSize: 13, fontWeight: 600, flex: 1 }}>{label}</span>
-      {soon && (
-        <span style={{ fontSize: 9, fontWeight: 700, letterSpacing: '0.12em', textTransform: 'uppercase', padding: '2px 7px', borderRadius: 6, background: 'rgba(255,255,255,0.04)', border: '1px solid rgba(255,255,255,0.08)', color: C.textMuted }}>
-          Soon
-        </span>
-      )}
     </div>
   );
 }
 
 // ─── Main App ─────────────────────────────────────────────────────────────────
 export default function App() {
+  const [activePage, setActivePage] = useState('research');
+  const [auditLog, setAuditLog] = useState([]);
   const [ticker, setTicker] = useState('');
   const [loading, setLoading] = useState(false);
   const [report, setReport] = useState(null);
   const [logs, setLogs] = useState([]);
   const [time, setTime] = useState(new Date());
   const consoleRef = useRef(null);
+
+  const addToAuditLog = useCallback((entry) => {
+    setAuditLog(p => [...p, entry]);
+  }, []);
 
   useEffect(() => {
     const t = setInterval(() => setTime(new Date()), 1000);
@@ -162,11 +171,11 @@ export default function App() {
 
         {/* Nav */}
         <nav style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: 4 }}>
-          <NavItem icon={LayoutDashboard} label="Research Terminal" active />
-          <NavItem icon={Activity} label="Live Orchestration" soon />
-          <NavItem icon={PieChart} label="Portfolio Diligence" soon />
-          <NavItem icon={TrendingUp} label="Market Sentiment" soon />
-          <NavItem icon={ShieldCheck} label="Compliance Hub" soon />
+          <NavItem icon={LayoutDashboard} label="Research Terminal" active={activePage === 'research'} onClick={() => setActivePage('research')} />
+          <NavItem icon={Activity} label="Live Orchestration" active={activePage === 'orchestration'} onClick={() => setActivePage('orchestration')} />
+          <NavItem icon={PieChart} label="Portfolio Diligence" active={activePage === 'portfolio'} onClick={() => setActivePage('portfolio')} />
+          <NavItem icon={TrendingUp} label="Market Sentiment" active={activePage === 'sentiment'} onClick={() => setActivePage('sentiment')} />
+          <NavItem icon={ShieldCheck} label="Compliance Hub" active={activePage === 'compliance'} onClick={() => setActivePage('compliance')} />
         </nav>
 
         {/* User card */}
@@ -193,7 +202,9 @@ export default function App() {
             <LayoutDashboard size={14} />
             <span>Platform</span>
             <ChevronRight size={12} style={{ opacity: 0.4 }} />
-            <span style={{ color: '#fff', fontWeight: 600 }}>Research Terminal</span>
+            <span style={{ color: '#fff', fontWeight: 600 }}>{
+              ({ research: 'Research Terminal', orchestration: 'Live Orchestration', portfolio: 'Portfolio Diligence', sentiment: 'Market Sentiment', compliance: 'Compliance Hub' })[activePage]
+            }</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
             <div style={{ textAlign: 'right' }}>
@@ -208,7 +219,11 @@ export default function App() {
         </header>
 
         {/* ── Body ── */}
-        <div style={{ flex: 1, display: 'flex', gap: 20, padding: 20, overflow: 'hidden' }}>
+        {activePage === 'orchestration' && <LiveOrchestration addToAuditLog={addToAuditLog} />}
+        {activePage === 'portfolio' && <PortfolioDiligence addToAuditLog={addToAuditLog} />}
+        {activePage === 'sentiment' && <MarketSentiment />}
+        {activePage === 'compliance' && <ComplianceHub auditLog={auditLog} />}
+        {activePage !== 'research' ? null : <div style={{ flex: 1, display: 'flex', gap: 20, padding: 20, overflow: 'hidden' }}>
 
           {/* ─── LEFT COLUMN ─── */}
           <div style={{ width: 320, flexShrink: 0, display: 'flex', flexDirection: 'column', gap: 16 }}>
@@ -348,8 +363,8 @@ export default function App() {
             </div>
           </div>
 
-        </div>
-      </div>
+        </div></div>}
     </div>
+    </div >
   );
 }
